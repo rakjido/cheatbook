@@ -2,6 +2,9 @@
 
 # Oracle
 
+INSERT INTO <TABLE B>
+SELECT * FROM <TABLE A>
+
 ```sql
 
 insert into NCR_DMI_OPT_RISK_POSN(
@@ -137,3 +140,50 @@ insert into NCR_DMI_OPT_RISK_POSN(
       and    posn.prod_cls_lrg_cd not in ('06','07','08','09','10','11','12','13','14')
       and    posn.TDATE = #{TDATE}
 ```
+
+
+UPDATE CASE
+
+```sql
+UPDATE NCR_DMI_CNTRP_CRGRD d SET CR_RISK_WGT = (
+SELECT
+              CASE WHEN a.CNTRP_TY_CD IN ('01','02','03','04','05','06') THEN (SELECT RISK_WGT FROM NCR_DMI_CR_RISK_WGT WHERE CNTRP_TY_CD = a.CNTRP_TY_CD)
+                      WHEN a.CNTRP_TY_CD IN ('15') THEN (SELECT RISK_WGT FROM NCR_DMI_CR_RISK_WGT WHERE CNTRP_TY_CD = a.CNTRP_TY_CD)
+                      WHEN a.CNTRP_TY_CD NOT IN ('01','02','03','04','05','06','15') THEN (
+                             SELECT RISK_WGT
+                             FROM (SELECT  wgt.CNTRP_TY_CD,
+                                   (SELECT CRGRD_SEQ FROM NCR_DMI_CRGRD_MAP   WHERE CRGRD_CD=wgt.END_CRGRD_CD) as END_CRGRD_SEQ,
+                                   (SELECT CRGRD_SEQ FROM NCR_DMI_CRGRD_MAP  WHERE CRGRD_CD=wgt.BEG_CRGRD_CD) as BEG_CRGRD_SEQ,
+                                   wgt.RISK_WGT
+                                  FROM NCR_DMI_CR_RISK_WGT wgt
+                               ) cvwgt
+                               WHERE CNTRP_TY_CD=a.CNTRP_TY_CD
+                               AND NVL(c.CRGRD_SEQ,30) BETWEEN END_CRGRD_SEQ AND BEG_CRGRD_SEQ
+                         )          
+              END as CR_RISK_WGT
+FROM NCR_DMI_CNTRP a, (SELECT * FROM NCR_DMI_CNTRP_CRGRD WHERE CAI_CD='00' AND TDATE= #{TDATE}) b, NCR_DMI_CRGRD_MAP c
+WHERE a.CNTRP_ID=b.CNTRP_ID(+)
+AND b.ISSUER_CRGRD_CD=c.CRGRD_CD (+) AND a.CNTRP_ID = d.CNTRP_ID) WHERE TDATE = #{TDATE} AND CAI_CD = '00'
+```
+
+
+MERGE CASE QUERY
+
+```sql
+MERGE INTO NCR_DMI_CNTRP a
+USING NCR_IF_M_CNTRP b
+ON(a.CNTRP_ID = b.CNTRP_ID)
+WHEN MATCHED THEN
+        UPDATE SET a.CNTRP_NM = b.CNTRP_NM
+                         , A.CNTRP_TY_CD = b.CNTRP_TY_CD
+                         , A.CORPNO = b.CORPNO
+                         , A.BIZNO = B.BIZNO
+                         , A.JMNO = B.JMNO  
+                         , A.CNTY_CD = B.CNTY_CD
+                         , A.STD_INDY_CLS_CD = NULL
+                         , A.AFFPRSN_TY_CD = B.AFFPRSN_TY_CD
+                         , A.CRE_ID = '401a'
+                         , A.CRE_DTIME = SYSDATE
+WHEN NOT MATCHED THEN
+        INSERT VALUES(b.CNTRP_ID , b.CNTRP_NM , b.CNTRP_TY_CD , b.CORPNO , b.BIZNO , b.JMNO , b.CNTY_CD  ,NULL ,NULL, b.AFFPRSN_TY_CD , '401a2', SYSDATE  , NULL,NULL)
+```        
