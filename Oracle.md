@@ -2,7 +2,7 @@
 
 # Oracle
 
-```
+```sql
 
 insert into NCR_DMI_OPT_RISK_POSN(
              TDATE
