@@ -2,7 +2,8 @@
 
 # Oracle
 
-'''sql
+```
+
 insert into NCR_DMI_OPT_RISK_POSN(
              TDATE
             ,POSN_ID
@@ -135,4 +136,4 @@ insert into NCR_DMI_OPT_RISK_POSN(
       and    prod.stk_mkt_cd = mkt.stk_mkt_cd(+)
       and    posn.prod_cls_lrg_cd not in ('06','07','08','09','10','11','12','13','14')
       and    posn.TDATE = #{TDATE}
-'''
+```
