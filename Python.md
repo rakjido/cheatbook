@@ -5,7 +5,7 @@ pip install flake8
 ```
 
 
-* autopep 설치
+* autopep8 설치
 
 ```
 pip install autopep8
