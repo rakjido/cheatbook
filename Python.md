@@ -13,4 +13,4 @@ pip install autopep8
 
 
 * Atom editor에서 python-autopep8 package를 설치
-단축키 : control + alt + s
+> 단축키 : control + alt + s
